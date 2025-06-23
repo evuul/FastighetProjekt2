@@ -1,0 +1,6 @@
+@FastighetProjekt_HostAddress = http://localhost:5135
+
+GET {{FastighetProjekt_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
