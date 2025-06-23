@@ -1,0 +1,16 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/contentModel.xml
+/projectSettingsUpdater.xml
+/modules.xml
+/.idea.FastighetProjekt.iml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+# Ignore sensitive app settings
+FastighetProjekt.API/appsettings.json
+appsettings.json
