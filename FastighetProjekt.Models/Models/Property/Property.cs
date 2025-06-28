@@ -8,5 +8,5 @@ public class Property
     public string City { get; set; } = string.Empty;
     public string ZipCode { get; set; } = string.Empty;
     
-    public ICollection<Apartment> Apartments { get; set; } = new List<Apartment>();
+    public ICollection<Apartment.Apartment> Apartments { get; set; } = new List<Apartment.Apartment>();
 }
