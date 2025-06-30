@@ -2,7 +2,7 @@ namespace FastighetProjekt.Models.Models.Announcement;
 
 public class Announcement
 {
-    public int NoticeId { get; set; }
+    public int AnnouncementId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public DateTime PublishedDate { get; set; } = DateTime.Now;

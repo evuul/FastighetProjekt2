@@ -2,7 +2,7 @@
 
 namespace FastighetProjekt.Models.Models.Payment
 {
-    internal class Payment
+    public class Payment
     {
         public int PaymentId { get; set; }
 
