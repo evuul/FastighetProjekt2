@@ -1,4 +1,4 @@
-namespace FastighetProjekt.Models.Models.Maintenance;
+namespace FastighetProjekt.Models.Models.MaintenanceRequest;
 
 public enum MaintenanceStatus
 {
@@ -8,7 +8,7 @@ public enum MaintenanceStatus
     Rejected
 }
 
-public class Maintenance
+public class MaintenanceRequest
 {
     public int MaintenanceRequestId { get; set; }
 

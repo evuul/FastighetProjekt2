@@ -2,7 +2,7 @@
 
 namespace FastighetProjekt.Models.Models.Fee
 {
-    internal class Fee
+    public class Fee
     {
         public int FeeId { get; set; }
 
