@@ -13,11 +13,7 @@ namespace FastighetProjekt.Models.Models.Fee
 
         [Required]
         public int Amount { get; set; }
-
-        [Required]
-        public bool IsPaid = false;
-
-        // Navigation property
+        
         [Required]
         public int ApartmentId { get; set; }
 
