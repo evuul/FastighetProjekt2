@@ -14,3 +14,4 @@
 # Ignore sensitive app settings
 FastighetProjekt.API/appsettings.json
 appsettings.json
+/.vs
