@@ -2,86 +2,89 @@ using FastighetProjekt.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace FastighetProjekt.Controllers.Apartment;
+namespace FastighetProjekt.Controllers.Property;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ApartmentController : ControllerBase
+public class PropertyController : ControllerBase
 {
     private readonly FastighetProjektDbContext _context;
 
-    public ApartmentController(FastighetProjektDbContext context)
+    public PropertyController(FastighetProjektDbContext context)
     {
         _context = context;
     }
 
-    // GET: api/Apartment
+    // GET: api/Property
     [HttpGet]
-    public async Task<IActionResult> GetApartments()
+    public async Task<IActionResult> GetProperties()
     {
-        var apartments = await _context.Apartments
-            .Include(a => a.Property)
-            .Select(a => new
+        var properties = await _context.Properties
+            .Select(p => new
+            {
+                p.PropertyId,
+                p.Name,
+                p.Adress,
+                p.City,
+                p.ZipCode,
+                ApartmentCount = p.Apartments.Count
+            })
+            .ToListAsync();
+
+        return Ok(properties);
+    }
+
+    // GET: api/Property/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetProperty(int id)
+    {
+        var property = await _context.Properties
+            .Include(p => p.Apartments)
+            .FirstOrDefaultAsync(p => p.PropertyId == id);
+
+        if (property == null)
+            return NotFound();
+
+        return Ok(new
+        {
+            property.PropertyId,
+            property.Name,
+            property.Adress,
+            property.City,
+            property.ZipCode,
+            Apartments = property.Apartments.Select(a => new
             {
                 a.ApartmentId,
                 a.ApartmentNumber,
                 a.Floor,
                 a.Rooms,
                 a.Area,
-                a.Rent,
-                a.PropertyId,
-                PropertyName = a.Property.Name
+                a.Rent
             })
-            .ToListAsync();
-
-        return Ok(apartments);
-    }
-
-    // GET: api/Apartment/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetApartment(int id)
-    {
-        var apartment = await _context.Apartments
-            .Include(a => a.Property)
-            .FirstOrDefaultAsync(a => a.ApartmentId == id);
-
-        if (apartment == null)
-            return NotFound();
-
-        return Ok(new
-        {
-            apartment.ApartmentId,
-            apartment.ApartmentNumber,
-            apartment.Floor,
-            apartment.Rooms,
-            apartment.Area,
-            apartment.Rent,
-            apartment.PropertyId,
-            PropertyName = apartment.Property.Name
         });
     }
 
-    // POST: api/Apartment
+    // POST: api/Property
     [HttpPost]
-    public async Task<IActionResult> CreateApartment([FromBody] Models.Models.Apartment.Apartment apartment)
+    public async Task<IActionResult> CreateProperty([FromBody] Models.Models.Property.Property property)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        _context.Apartments.Add(apartment);
+        _context.Properties.Add(property);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetApartment), new { id = apartment.ApartmentId }, apartment);
+        return CreatedAtAction(nameof(GetProperty), new { id = property.PropertyId }, property);
     }
 
-    // PUT: api/Apartment/{id}
+    // PUT: api/Property/{id}
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateApartment(int id, [FromBody] Models.Models.Apartment.Apartment apartment)
+    public async Task<IActionResult> UpdateProperty(int id, [FromBody] Models.Models.Property.Property property)
     {
-        if (id != apartment.ApartmentId)
+        if (id != property.PropertyId)
             return BadRequest();
 
-        _context.Entry(apartment).State = EntityState.Modified;
+        _context.Entry(property).State = EntityState.Modified;
 
         try
         {
@@ -89,7 +92,7 @@ public class ApartmentController : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!_context.Apartments.Any(a => a.ApartmentId == id))
+            if (!_context.Properties.Any(p => p.PropertyId == id))
                 return NotFound();
             throw;
         }
@@ -97,15 +100,15 @@ public class ApartmentController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/Apartment/{id}
+    // DELETE: api/Property/{id}
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteApartment(int id)
+    public async Task<IActionResult> DeleteProperty(int id)
     {
-        var apartment = await _context.Apartments.FindAsync(id);
-        if (apartment == null)
+        var property = await _context.Properties.FindAsync(id);
+        if (property == null)
             return NotFound();
 
-        _context.Apartments.Remove(apartment);
+        _context.Properties.Remove(property);
         await _context.SaveChangesAsync();
 
         return NoContent();
