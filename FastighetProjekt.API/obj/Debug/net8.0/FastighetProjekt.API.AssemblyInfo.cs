@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FastighetProjekt.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+037baeb4f82bbdc23b9bd5ce654a2b604a044a16")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+18c6bfa58879edc595e184afdc51939cdabe9f28")]
 [assembly: System.Reflection.AssemblyProductAttribute("FastighetProjekt.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FastighetProjekt.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
