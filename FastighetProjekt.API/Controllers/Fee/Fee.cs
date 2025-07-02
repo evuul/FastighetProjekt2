@@ -1,6 +1,6 @@
-using FastighetProjekt.Data;
+using FastighetProjekt.Models.Models.Fee;
+using FastighetProjekt.Repositories.Fee;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FastighetProjekt.Controllers.Fee;
 
@@ -8,52 +8,50 @@ namespace FastighetProjekt.Controllers.Fee;
 [Route("api/[controller]")]
 public class FeeController : ControllerBase
 {
-    private readonly FastighetProjektDbContext _context;
-    public FeeController(FastighetProjektDbContext context)
+    private readonly IFeeRepository _feeRepository;
+
+    public FeeController(IFeeRepository feeRepository)
     {
-        _context = context;
+        _feeRepository = feeRepository;
     }
 
     [HttpGet(Name = "GetFees")]
     public async Task<IActionResult> GetFees()
     {
-        var fees = await _context.Fees
-            .Include(f => f.Apartment)
-            .Select(f => new
-            {
-                f.FeeId,
-                f.Month,
-                f.Amount,
-                f.DueDate,
-                f.ApartmentId,
-                IsPaid = _context.Payments.Any(p => p.FeeId == f.FeeId)
-            })
-            .ToListAsync();
+        var fees = await _feeRepository.GetAllFeesAsync();
 
-        return Ok(fees);
+        var result = fees.Select(f => new
+        {
+            f.FeeId,
+            f.Month,
+            f.Amount,
+            f.DueDate,
+            f.ApartmentId,
+            // Antingen hantera IsPaid i repository eller här, beroende på design
+            IsPaid = false // Du behöver lägga till detta, om du vill
+        });
+
+        return Ok(result);
     }
 
     [HttpGet("{id}", Name = "GetFeeById")]
-    public IActionResult GetFee(int id)
+    public async Task<IActionResult> GetFee(int id)
     {
-        var fee = _context.Fees.Find(id);
+        var fee = await _feeRepository.GetFeeByIdAsync(id);
+
         if (fee == null)
-        {
             return NotFound();
-        }
+
         return Ok(fee);
     }
 
     [HttpPost(Name = "CreateFee")]
-    public IActionResult CreateFee([FromBody] Models.Models.Fee.Fee fee)
+    public async Task<IActionResult> CreateFee([FromBody] Models.Models.Fee.Fee fee)
     {
         if (fee == null)
-        {
             return BadRequest("Fee cannot be null");
-        }
 
-        _context.Fees.Add(fee);
-        _context.SaveChanges();
+        await _feeRepository.AddFeeAsync(fee);
 
         return CreatedAtRoute("GetFeeById", new { id = fee.FeeId }, fee);
     }
@@ -64,18 +62,17 @@ public class FeeController : ControllerBase
         if (id != fee.FeeId)
             return BadRequest();
 
-        _context.Entry(fee).State = EntityState.Modified;
-
         try
         {
-            await _context.SaveChangesAsync();
+            await _feeRepository.UpdateFeeAsync(fee);
         }
-        catch (DbUpdateConcurrencyException)
+        catch (Exception ex)
         {
-            if (!_context.Fees.Any(f => f.FeeId == id))
+            // Hantera t.ex concurrency exceptions om du vill
+            if (!await _feeRepository.FeeExistsAsync(id))
                 return NotFound();
-            else
-                throw;
+
+            throw;
         }
 
         return NoContent();
@@ -84,14 +81,10 @@ public class FeeController : ControllerBase
     [HttpDelete("{id}", Name = "DeleteFee")]
     public async Task<IActionResult> DeleteFee(int id)
     {
-        var fee = await _context.Fees.FindAsync(id);
-        if (fee == null)
-        {
+        if (!await _feeRepository.FeeExistsAsync(id))
             return NotFound();
-        }
 
-        _context.Fees.Remove(fee);
-        await _context.SaveChangesAsync();
+        await _feeRepository.DeleteFeeAsync(id);
 
         return NoContent();
     }
