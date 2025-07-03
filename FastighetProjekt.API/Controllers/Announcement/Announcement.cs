@@ -1,7 +1,6 @@
-using FastighetProjekt.Data;
 using FastighetProjekt.Models.Models.Announcement;
+using FastighetProjekt.Repositories.Announcement;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FastighetProjekt.Controllers.Announcement;
 
@@ -9,29 +8,26 @@ namespace FastighetProjekt.Controllers.Announcement;
 [Route("api/[controller]")]
 public class AnnouncementController : ControllerBase
 {
-    private readonly FastighetProjektDbContext _context;
+    private readonly IAnnouncementRepository _announcementRepository;
 
-    public AnnouncementController(FastighetProjektDbContext context)
+    public AnnouncementController(IAnnouncementRepository announcementRepository)
     {
-        _context = context;
+        _announcementRepository = announcementRepository;
     }
 
     // GET: api/Announcement
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var announcements = await _context.Announcements
-            .OrderByDescending(a => a.PublishedDate)
-            .ToListAsync();
-
+        var announcements = await _announcementRepository.GetAllAsync();
         return Ok(announcements);
     }
 
-    // GET: api/Announcement/{id}
+    // GET: api/Announcement/5
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var announcement = await _context.Announcements.FindAsync(id);
+        var announcement = await _announcementRepository.GetByIdAsync(id);
         if (announcement == null)
             return NotFound();
 
@@ -45,46 +41,26 @@ public class AnnouncementController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        _context.Announcements.Add(announcement);
-        await _context.SaveChangesAsync();
-
+        await _announcementRepository.AddAsync(announcement);
         return CreatedAtAction(nameof(GetById), new { id = announcement.AnnouncementId }, announcement);
     }
 
-    // PUT: api/Announcement/{id}
+    // PUT: api/Announcement/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] Models.Models.Announcement.Announcement announcement)
+    public async Task<IActionResult> Update(int id, [FromBody] Models.Models.Announcement.Announcement updatedAnnouncement)
     {
-        if (id != announcement.AnnouncementId)
-            return BadRequest();
+        if (id != updatedAnnouncement.AnnouncementId)
+            return BadRequest("ID mismatch");
 
-        _context.Entry(announcement).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.Announcements.Any(a => a.AnnouncementId == id))
-                return NotFound();
-            throw;
-        }
-
+        await _announcementRepository.UpdateAsync(updatedAnnouncement);
         return NoContent();
     }
 
-    // DELETE: api/Announcement/{id}
+    // DELETE: api/Announcement/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var announcement = await _context.Announcements.FindAsync(id);
-        if (announcement == null)
-            return NotFound();
-
-        _context.Announcements.Remove(announcement);
-        await _context.SaveChangesAsync();
-
+        await _announcementRepository.DeleteAsync(id);
         return NoContent();
     }
 }
