@@ -1,66 +1,62 @@
-using FastighetProjekt.Repositories.Property;
+using FastighetProjekt.Models.Models.Property;
+using FastighetProjekt.Services.Property;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FastighetProjekt.Controllers.Property
+namespace FastighetProjekt.API.Controllers.Property
 {
     [ApiController]
     [Route("api/[controller]")]
     public class PropertyController : ControllerBase
     {
-        private readonly IPropertyRepository _repository;
+        private readonly IPropertyService _propertyService;
 
-        public PropertyController(IPropertyRepository repository)
+        public PropertyController(IPropertyService propertyService)
         {
-            _repository = repository;
+            _propertyService = propertyService;
         }
 
-        // GET: api/Property
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Models.Models.Property.Property>>> GetAll()
         {
-            var properties = await _repository.GetAllAsync();
+            var properties = await _propertyService.GetAllAsync();
             return Ok(properties);
         }
 
-        // GET: api/Property/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Models.Models.Property.Property>> GetById(int id)
         {
-            var property = await _repository.GetByIdAsync(id);
+            var property = await _propertyService.GetByIdAsync(id);
             if (property == null)
                 return NotFound();
 
             return Ok(property);
         }
 
-        // POST: api/Property
         [HttpPost]
         public async Task<ActionResult<Models.Models.Property.Property>> Create(Models.Models.Property.Property property)
         {
-            var created = await _repository.CreateAsync(property);
+            var created = await _propertyService.CreateAsync(property);
             return CreatedAtAction(nameof(GetById), new { id = created.PropertyId }, created);
         }
 
-        // PUT: api/Property/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Models.Models.Property.Property property)
         {
             if (id != property.PropertyId)
-                return BadRequest("Id mismatch");
+                return BadRequest();
 
-            var updated = await _repository.UpdateAsync(property);
+            var updated = await _propertyService.UpdateAsync(property);
             if (updated == null)
                 return NotFound();
 
             return NoContent();
         }
 
-        // DELETE: api/Property/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _repository.DeleteAsync(id);
-            if (!deleted)
+            var success = await _propertyService.DeleteAsync(id);
+            if (!success)
                 return NotFound();
 
             return NoContent();
