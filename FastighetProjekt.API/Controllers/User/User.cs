@@ -1,110 +1,62 @@
-using FastighetProjekt.Data;
 using FastighetProjekt.Models.Models.User;
+using FastighetProjekt.Repositories.User;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace FastighetProjekt.Controllers.User;
-
-[ApiController]
-[Route("api/[controller]")]
-public class UserController : ControllerBase
+namespace FastighetProjekt.API.Controllers.User
 {
-    private readonly FastighetProjektDbContext _context;
-
-    public UserController(FastighetProjektDbContext context)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class UserController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly IUserRepository _repository;
 
-    // GET: api/User
-    [HttpGet]
-    public async Task<IActionResult> GetUsers()
-    {
-        var users = await _context.Users
-            .Select(u => new
-            {
-                u.UserId,
-                u.FirstName,
-                u.LastName,
-                u.Email,
-                u.Role
-            })
-            .ToListAsync();
-
-        return Ok(users);
-    }
-
-    // GET: api/User/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(int id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null)
-            return NotFound();
-
-        return Ok(new
+        public UserController(IUserRepository repository)
         {
-            user.UserId,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.Role
-        });
-    }
+            _repository = repository;
+        }
 
-    // POST: api/User
-    [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] Models.Models.User.User user)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, new
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Models.Models.User.User>>> GetAllUsers()
         {
-            user.UserId,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.Role
-        });
-    }
+            var users = await _repository.GetAllUsersAsync();
+            return Ok(users);
+        }
 
-    // PUT: api/User/{id}
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(int id, [FromBody] Models.Models.User.User updatedUser)
-    {
-        if (id != updatedUser.UserId)
-            return BadRequest();
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Models.Models.User.User>> GetUserById(int id)
+        {
+            var user = await _repository.GetUserByIdAsync(id);
+            if (user == null)
+                return NotFound();
 
-        var user = await _context.Users.FindAsync(id);
-        if (user == null)
-            return NotFound();
+            return Ok(user);
+        }
 
-        user.FirstName = updatedUser.FirstName;
-        user.LastName = updatedUser.LastName;
-        user.Email = updatedUser.Email;
-        user.Role = updatedUser.Role;
-        user.PasswordHash = updatedUser.PasswordHash;
+        [HttpPost]
+        public async Task<ActionResult<Models.Models.User.User>> CreateUser(Models.Models.User.User user)
+        {
+            var createdUser = await _repository.CreateUserAsync(user);
+            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.UserId }, createdUser);
+        }
 
-        await _context.SaveChangesAsync();
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, Models.Models.User.User user)
+        {
+            if (id != user.UserId)
+                return BadRequest("ID mismatch");
 
-        return NoContent();
-    }
+            var updatedUser = await _repository.UpdateUserAsync(user);
+            return Ok(updatedUser);
+        }
 
-    // DELETE: api/User/{id}
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(int id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null)
-            return NotFound();
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var deleted = await _repository.DeleteUserAsync(id);
+            if (!deleted)
+                return NotFound();
 
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
+            return NoContent();
+        }
     }
 }
