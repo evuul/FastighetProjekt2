@@ -1,116 +1,69 @@
-using FastighetProjekt.Data;
+using FastighetProjekt.Repositories.Property;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace FastighetProjekt.Controllers.Property;
-
-[ApiController]
-[Route("api/[controller]")]
-public class PropertyController : ControllerBase
+namespace FastighetProjekt.Controllers.Property
 {
-    private readonly FastighetProjektDbContext _context;
-
-    public PropertyController(FastighetProjektDbContext context)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class PropertyController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly IPropertyRepository _repository;
 
-    // GET: api/Property
-    [HttpGet]
-    public async Task<IActionResult> GetProperties()
-    {
-        var properties = await _context.Properties
-            .Select(p => new
-            {
-                p.PropertyId,
-                p.Name,
-                p.Adress,
-                p.City,
-                p.ZipCode,
-                ApartmentCount = p.Apartments.Count
-            })
-            .ToListAsync();
-
-        return Ok(properties);
-    }
-
-    // GET: api/Property/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetProperty(int id)
-    {
-        var property = await _context.Properties
-            .Include(p => p.Apartments)
-            .FirstOrDefaultAsync(p => p.PropertyId == id);
-
-        if (property == null)
-            return NotFound();
-
-        return Ok(new
+        public PropertyController(IPropertyRepository repository)
         {
-            property.PropertyId,
-            property.Name,
-            property.Adress,
-            property.City,
-            property.ZipCode,
-            Apartments = property.Apartments.Select(a => new
-            {
-                a.ApartmentId,
-                a.ApartmentNumber,
-                a.Floor,
-                a.Rooms,
-                a.Area,
-                a.Rent
-            })
-        });
-    }
-
-    // POST: api/Property
-    [HttpPost]
-    public async Task<IActionResult> CreateProperty([FromBody] Models.Models.Property.Property property)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        _context.Properties.Add(property);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetProperty), new { id = property.PropertyId }, property);
-    }
-
-    // PUT: api/Property/{id}
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProperty(int id, [FromBody] Models.Models.Property.Property property)
-    {
-        if (id != property.PropertyId)
-            return BadRequest();
-
-        _context.Entry(property).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
+            _repository = repository;
         }
-        catch (DbUpdateConcurrencyException)
+
+        // GET: api/Property
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Models.Models.Property.Property>>> GetAll()
         {
-            if (!_context.Properties.Any(p => p.PropertyId == id))
+            var properties = await _repository.GetAllAsync();
+            return Ok(properties);
+        }
+
+        // GET: api/Property/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Models.Models.Property.Property>> GetById(int id)
+        {
+            var property = await _repository.GetByIdAsync(id);
+            if (property == null)
                 return NotFound();
-            throw;
+
+            return Ok(property);
         }
 
-        return NoContent();
-    }
+        // POST: api/Property
+        [HttpPost]
+        public async Task<ActionResult<Models.Models.Property.Property>> Create(Models.Models.Property.Property property)
+        {
+            var created = await _repository.CreateAsync(property);
+            return CreatedAtAction(nameof(GetById), new { id = created.PropertyId }, created);
+        }
 
-    // DELETE: api/Property/{id}
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProperty(int id)
-    {
-        var property = await _context.Properties.FindAsync(id);
-        if (property == null)
-            return NotFound();
+        // PUT: api/Property/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, Models.Models.Property.Property property)
+        {
+            if (id != property.PropertyId)
+                return BadRequest("Id mismatch");
 
-        _context.Properties.Remove(property);
-        await _context.SaveChangesAsync();
+            var updated = await _repository.UpdateAsync(property);
+            if (updated == null)
+                return NotFound();
 
-        return NoContent();
+            return NoContent();
+        }
+
+        // DELETE: api/Property/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _repository.DeleteAsync(id);
+            if (!deleted)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }
